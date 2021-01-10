@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.lwjgl.opengl.GL32.*;
+import org.lwjgl.opengles.GLES30;
 
 /**
  * This class is a straightforward port of the
@@ -33,7 +33,6 @@ import static org.lwjgl.opengl.GL32.*;
 @SuppressWarnings("MagicNumber")
 public final class ImGuiImplGl3 {
     // OpenGL Data
-    private int glVersion = 0;
     private String glslVersion = "";
     private int gFontTexture = 0;
     private int gShaderHandle = 0;
@@ -82,7 +81,7 @@ public final class ImGuiImplGl3 {
      * Thus a "#version 130" string will be used instead.
      */
     public void init() {
-        init(null);
+        init("430");
     }
 
     /**
@@ -110,7 +109,7 @@ public final class ImGuiImplGl3 {
      * <p>
      * If the argument is null, then a "#version 130" string will be used by default.
      */
-    public void init(final String glslVersion) {
+    private void init(final String glslVersion) {
         readGlVersion();
         setupBackendCapabilitiesFlags();
 
@@ -155,8 +154,8 @@ public final class ImGuiImplGl3 {
         // Render command lists
         for (int cmdListIdx = 0; cmdListIdx < drawData.getCmdListsCount(); cmdListIdx++) {
             // Upload vertex/index buffers
-            glBufferData(GL_ARRAY_BUFFER, drawData.getCmdListVtxBufferData(cmdListIdx), GL_STREAM_DRAW);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, drawData.getCmdListIdxBufferData(cmdListIdx), GL_STREAM_DRAW);
+            GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, drawData.getCmdListVtxBufferData(cmdListIdx), GLES30.GL_STREAM_DRAW);
+            GLES30.glBufferData(GLES30.GL_ELEMENT_ARRAY_BUFFER, drawData.getCmdListIdxBufferData(cmdListIdx), GLES30.GL_STREAM_DRAW);
 
             for (int cmdBufferIdx = 0; cmdBufferIdx < drawData.getCmdListCmdBufferSize(cmdListIdx); cmdBufferIdx++) {
                 drawData.getCmdListCmdBufferClipRect(cmdListIdx, cmdBufferIdx, clipRect);
@@ -168,7 +167,7 @@ public final class ImGuiImplGl3 {
 
                 if (clipRectX < fbWidth && clipRectY < fbHeight && clipRectZ >= 0.0f && clipRectW >= 0.0f) {
                     // Apply scissor/clipping rectangle
-                    glScissor((int) clipRectX, (int) (fbHeight - clipRectW), (int) (clipRectZ - clipRectX), (int) (clipRectW - clipRectY));
+                    GLES30.glScissor((int) clipRectX, (int) (fbHeight - clipRectW), (int) (clipRectZ - clipRectX), (int) (clipRectW - clipRectY));
 
                     // Bind texture, Draw
                     final int textureId = drawData.getCmdListCmdBufferTextureId(cmdListIdx, cmdBufferIdx);
@@ -177,13 +176,13 @@ public final class ImGuiImplGl3 {
                     final int vtxBufferOffset = drawData.getCmdListCmdBufferVtxOffset(cmdListIdx, cmdBufferIdx);
                     final int indices = idxBufferOffset * ImDrawData.SIZEOF_IM_DRAW_IDX;
 
-                    glBindTexture(GL_TEXTURE_2D, textureId);
+                    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId);
 
-                    if (glVersion >= 320) {
-                        glDrawElementsBaseVertex(GL_TRIANGLES, elemCount, GL_UNSIGNED_SHORT, indices, vtxBufferOffset);
-                    } else {
-                        glDrawElements(GL_TRIANGLES, elemCount, GL_UNSIGNED_SHORT, indices);
-                    }
+//                    if (GLES30.glVersion >= 320) {
+//                        GLES30.glDrawElementsBaseVertex(GLES30.GL_TRIANGLES, elemCount, GLES30.GL_UNSIGNED_SHORT, indices, vtxBufferOffset);
+//                    } else {
+                        GLES30.glDrawElements(GLES30.GL_TRIANGLES, elemCount, GLES30.GL_UNSIGNED_SHORT, indices);
+//                    }
                 }
             }
         }
@@ -196,12 +195,12 @@ public final class ImGuiImplGl3 {
      * Call this method in the end of your application cycle to dispose resources used by {@link ImGuiImplGl3}.
      */
     public void dispose() {
-        glDeleteBuffers(gVboHandle);
-        glDeleteBuffers(gElementsHandle);
-        glDetachShader(gShaderHandle, gVertHandle);
-        glDetachShader(gShaderHandle, gFragHandle);
-        glDeleteProgram(gShaderHandle);
-        glDeleteTextures(gFontTexture);
+        GLES30.glDeleteBuffers(gVboHandle);
+        GLES30.glDeleteBuffers(gElementsHandle);
+        GLES30.glDetachShader(gShaderHandle, gVertHandle);
+        GLES30.glDetachShader(gShaderHandle, gFragHandle);
+        GLES30.glDeleteProgram(gShaderHandle);
+        GLES30.glDeleteTextures(gFontTexture);
         shutdownPlatformInterface();
     }
 
@@ -209,20 +208,20 @@ public final class ImGuiImplGl3 {
      * Method rebuilds the font atlas for Dear ImGui. Could be used to update application fonts in runtime.
      */
     public void updateFontsTexture() {
-        glDeleteTextures(gFontTexture);
+        GLES30.glDeleteTextures(gFontTexture);
 
         final ImFontAtlas fontAtlas = ImGui.getIO().getFonts();
         final ImInt width = new ImInt();
         final ImInt height = new ImInt();
         final ByteBuffer buffer = fontAtlas.getTexDataAsRGBA32(width, height);
 
-        gFontTexture = glGenTextures();
+        gFontTexture = GLES30.glGenTextures();
 
-        glBindTexture(GL_TEXTURE_2D, gFontTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, gFontTexture);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width.get(), height.get(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA, width.get(), height.get(), 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, buffer);
 
         fontAtlas.setTexID(gFontTexture);
     }
@@ -230,19 +229,18 @@ public final class ImGuiImplGl3 {
     private void readGlVersion() {
         final int[] major = new int[1];
         final int[] minor = new int[1];
-        glGetIntegerv(GL_MAJOR_VERSION, major);
-        glGetIntegerv(GL_MINOR_VERSION, minor);
-        glVersion = major[0] * 100 + minor[0] * 10;
+        GLES30.glGetIntegerv(GLES30.GL_MAJOR_VERSION, major);
+        GLES30.glGetIntegerv(GLES30.GL_MINOR_VERSION, minor);
     }
 
     private void setupBackendCapabilitiesFlags() {
         final ImGuiIO io = ImGui.getIO();
         io.setBackendRendererName("imgui_java_impl_opnegl3");
 
-        // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
-        if (glVersion >= 320) {
-            io.addBackendFlags(ImGuiBackendFlags.RendererHasVtxOffset);
-        }
+//        // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+//        if (GLES30.glVersion >= 320) {
+//            io.addBackendFlags(ImGuiBackendFlags.RendererHasVtxOffset);
+//        }
 
         // We can create multi-viewports on the Renderer side (optional)
         io.addBackendFlags(ImGuiBackendFlags.RendererHasViewports);
@@ -253,28 +251,28 @@ public final class ImGuiImplGl3 {
         final int[] lastTexture = new int[1];
         final int[] lastArrayBuffer = new int[1];
         final int[] lastVertexArray = new int[1];
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, lastTexture);
-        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, lastArrayBuffer);
-        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, lastVertexArray);
+        GLES30.glGetIntegerv(GLES30.GL_TEXTURE_BINDING_2D, lastTexture);
+        GLES30.glGetIntegerv(GLES30.GL_ARRAY_BUFFER_BINDING, lastArrayBuffer);
+        GLES30.glGetIntegerv(GLES30.GL_VERTEX_ARRAY_BINDING, lastVertexArray);
 
         createShaders();
 
-        gAttribLocationTex = glGetUniformLocation(gShaderHandle, "Texture");
-        gAttribLocationProjMtx = glGetUniformLocation(gShaderHandle, "ProjMtx");
-        gAttribLocationVtxPos = glGetAttribLocation(gShaderHandle, "Position");
-        gAttribLocationVtxUV = glGetAttribLocation(gShaderHandle, "UV");
-        gAttribLocationVtxColor = glGetAttribLocation(gShaderHandle, "Color");
+        gAttribLocationTex = GLES30.glGetUniformLocation(gShaderHandle, "Texture");
+        gAttribLocationProjMtx = GLES30.glGetUniformLocation(gShaderHandle, "ProjMtx");
+        gAttribLocationVtxPos = GLES30.glGetAttribLocation(gShaderHandle, "Position");
+        gAttribLocationVtxUV = GLES30.glGetAttribLocation(gShaderHandle, "UV");
+        gAttribLocationVtxColor = GLES30.glGetAttribLocation(gShaderHandle, "Color");
 
         // Create buffers
-        gVboHandle = glGenBuffers();
-        gElementsHandle = glGenBuffers();
+        gVboHandle = GLES30.glGenBuffers();
+        gElementsHandle = GLES30.glGenBuffers();
 
         updateFontsTexture();
 
         // Restore modified GL state
-        glBindTexture(GL_TEXTURE_2D, lastTexture[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer[0]);
-        glBindVertexArray(lastVertexArray[0]);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, lastTexture[0]);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, lastArrayBuffer[0]);
+        GLES30.glBindVertexArray(lastVertexArray[0]);
     }
 
     private void createShaders() {
@@ -295,16 +293,16 @@ public final class ImGuiImplGl3 {
             fragShaderSource = getFragmentShaderGlsl130();
         }
 
-        gVertHandle = createAndCompileShader(GL_VERTEX_SHADER, vertShaderSource);
-        gFragHandle = createAndCompileShader(GL_FRAGMENT_SHADER, fragShaderSource);
+        gVertHandle = createAndCompileShader(GLES30.GL_VERTEX_SHADER, vertShaderSource);
+        gFragHandle = createAndCompileShader(GLES30.GL_FRAGMENT_SHADER, fragShaderSource);
 
-        gShaderHandle = glCreateProgram();
-        glAttachShader(gShaderHandle, gVertHandle);
-        glAttachShader(gShaderHandle, gFragHandle);
-        glLinkProgram(gShaderHandle);
+        gShaderHandle = GLES30.glCreateProgram();
+        GLES30.glAttachShader(gShaderHandle, gVertHandle);
+        GLES30.glAttachShader(gShaderHandle, gFragHandle);
+        GLES30.glLinkProgram(gShaderHandle);
 
-        if (glGetProgrami(gShaderHandle, GL_LINK_STATUS) == GL_FALSE) {
-            throw new IllegalStateException("Failed to link shader program:\n" + glGetProgramInfoLog(gShaderHandle));
+        if (GLES30.glGetProgrami(gShaderHandle, GLES30.GL_LINK_STATUS) == GLES30.GL_FALSE) {
+            throw new IllegalStateException("Failed to link shader program:\n" + GLES30.glGetProgramInfoLog(gShaderHandle));
         }
     }
 
@@ -320,62 +318,62 @@ public final class ImGuiImplGl3 {
     }
 
     private void backupGlState() {
-        glGetIntegerv(GL_ACTIVE_TEXTURE, lastActiveTexture);
-        glActiveTexture(GL_TEXTURE0);
-        glGetIntegerv(GL_CURRENT_PROGRAM, lastProgram);
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, lastTexture);
-        glGetIntegerv(GL_ARRAY_BUFFER_BINDING, lastArrayBuffer);
-        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, lastVertexArrayObject);
-        glGetIntegerv(GL_VIEWPORT, lastViewport);
-        glGetIntegerv(GL_SCISSOR_BOX, lastScissorBox);
-        glGetIntegerv(GL_BLEND_SRC_RGB, lastBlendSrcRgb);
-        glGetIntegerv(GL_BLEND_DST_RGB, lastBlendDstRgb);
-        glGetIntegerv(GL_BLEND_SRC_ALPHA, lastBlendSrcAlpha);
-        glGetIntegerv(GL_BLEND_DST_ALPHA, lastBlendDstAlpha);
-        glGetIntegerv(GL_BLEND_EQUATION_RGB, lastBlendEquationRgb);
-        glGetIntegerv(GL_BLEND_EQUATION_ALPHA, lastBlendEquationAlpha);
-        lastEnableBlend = glIsEnabled(GL_BLEND);
-        lastEnableCullFace = glIsEnabled(GL_CULL_FACE);
-        lastEnableDepthTest = glIsEnabled(GL_DEPTH_TEST);
-        lastEnableScissorTest = glIsEnabled(GL_SCISSOR_TEST);
+        GLES30.glGetIntegerv(GLES30.GL_ACTIVE_TEXTURE, lastActiveTexture);
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+        GLES30.glGetIntegerv(GLES30.GL_CURRENT_PROGRAM, lastProgram);
+        GLES30.glGetIntegerv(GLES30.GL_TEXTURE_BINDING_2D, lastTexture);
+        GLES30.glGetIntegerv(GLES30.GL_ARRAY_BUFFER_BINDING, lastArrayBuffer);
+        GLES30.glGetIntegerv(GLES30.GL_VERTEX_ARRAY_BINDING, lastVertexArrayObject);
+        GLES30.glGetIntegerv(GLES30.GL_VIEWPORT, lastViewport);
+        GLES30.glGetIntegerv(GLES30.GL_SCISSOR_BOX, lastScissorBox);
+        GLES30.glGetIntegerv(GLES30.GL_BLEND_SRC_RGB, lastBlendSrcRgb);
+        GLES30.glGetIntegerv(GLES30.GL_BLEND_DST_RGB, lastBlendDstRgb);
+        GLES30.glGetIntegerv(GLES30.GL_BLEND_SRC_ALPHA, lastBlendSrcAlpha);
+        GLES30.glGetIntegerv(GLES30.GL_BLEND_DST_ALPHA, lastBlendDstAlpha);
+        GLES30.glGetIntegerv(GLES30.GL_BLEND_EQUATION_RGB, lastBlendEquationRgb);
+        GLES30.glGetIntegerv(GLES30.GL_BLEND_EQUATION_ALPHA, lastBlendEquationAlpha);
+        lastEnableBlend = GLES30.glIsEnabled(GLES30.GL_BLEND);
+        lastEnableCullFace = GLES30.glIsEnabled(GLES30.GL_CULL_FACE);
+        lastEnableDepthTest = GLES30.glIsEnabled(GLES30.GL_DEPTH_TEST);
+        lastEnableScissorTest = GLES30.glIsEnabled(GLES30.GL_SCISSOR_TEST);
     }
 
     private void restoreModifiedGlState() {
-        glUseProgram(lastProgram[0]);
-        glBindTexture(GL_TEXTURE_2D, lastTexture[0]);
-        glActiveTexture(lastActiveTexture[0]);
-        glBindVertexArray(lastVertexArrayObject[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, lastArrayBuffer[0]);
-        glBlendEquationSeparate(lastBlendEquationRgb[0], lastBlendEquationAlpha[0]);
-        glBlendFuncSeparate(lastBlendSrcRgb[0], lastBlendDstRgb[0], lastBlendSrcAlpha[0], lastBlendDstAlpha[0]);
+        GLES30.glUseProgram(lastProgram[0]);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, lastTexture[0]);
+        GLES30.glActiveTexture(lastActiveTexture[0]);
+        GLES30.glBindVertexArray(lastVertexArrayObject[0]);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, lastArrayBuffer[0]);
+        GLES30.glBlendEquationSeparate(lastBlendEquationRgb[0], lastBlendEquationAlpha[0]);
+        GLES30.glBlendFuncSeparate(lastBlendSrcRgb[0], lastBlendDstRgb[0], lastBlendSrcAlpha[0], lastBlendDstAlpha[0]);
         // @formatter:off CHECKSTYLE:OFF
-        if (lastEnableBlend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
-        if (lastEnableCullFace) glEnable(GL_CULL_FACE); else glDisable(GL_CULL_FACE);
-        if (lastEnableDepthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
-        if (lastEnableScissorTest) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+        if (lastEnableBlend) GLES30.glEnable(GLES30.GL_BLEND); else GLES30.glDisable(GLES30.GL_BLEND);
+        if (lastEnableCullFace) GLES30.glEnable(GLES30.GL_CULL_FACE); else GLES30.glDisable(GLES30.GL_CULL_FACE);
+        if (lastEnableDepthTest) GLES30.glEnable(GLES30.GL_DEPTH_TEST); else GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        if (lastEnableScissorTest) GLES30.glEnable(GLES30.GL_SCISSOR_TEST); else GLES30.glDisable(GLES30.GL_SCISSOR_TEST);
         // @formatter:on CHECKSTYLE:ON
-        glViewport(lastViewport[0], lastViewport[1], lastViewport[2], lastViewport[3]);
-        glScissor(lastScissorBox[0], lastScissorBox[1], lastScissorBox[2], lastScissorBox[3]);
+        GLES30.glViewport(lastViewport[0], lastViewport[1], lastViewport[2], lastViewport[3]);
+        GLES30.glScissor(lastScissorBox[0], lastScissorBox[1], lastScissorBox[2], lastScissorBox[3]);
     }
 
     // Setup desired GL state
     private void bind(final int fbWidth, final int fbHeight) {
         // Recreate the VAO every time (this is to easily allow multiple GL contexts to be rendered to. VAO are not shared among GL contexts)
         // The renderer would actually work without any VAO bound, but then our VertexAttrib calls would overwrite the default one currently bound.
-        gVertexArrayObjectHandle = glGenVertexArrays();
+        gVertexArrayObjectHandle = GLES30.glGenVertexArrays();
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled, polygon fill
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_SCISSOR_TEST);
+        GLES30.glEnable(GLES30.GL_BLEND);
+        GLES30.glBlendEquation(GLES30.GL_FUNC_ADD);
+        GLES30.glBlendFunc(GLES30.GL_SRC_ALPHA, GLES30.GL_ONE_MINUS_SRC_ALPHA);
+        GLES30.glDisable(GLES30.GL_CULL_FACE);
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST);
+        GLES30.glEnable(GLES30.GL_SCISSOR_TEST);
 
         // Setup viewport, orthographic projection matrix
         // Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right).
         // DisplayPos is (0,0) for single viewport apps.
-        glViewport(0, 0, fbWidth, fbHeight);
+        GLES30.glViewport(0, 0, fbWidth, fbHeight);
         final float left = displayPos.x;
         final float right = displayPos.x + displaySize.x;
         final float top = displayPos.y;
@@ -390,26 +388,26 @@ public final class ImGuiImplGl3 {
         orthoProjMatrix[15] = 1.0f;
 
         // Bind shader
-        glUseProgram(gShaderHandle);
-        glUniform1i(gAttribLocationTex, 0);
-        glUniformMatrix4fv(gAttribLocationProjMtx, false, orthoProjMatrix);
+        GLES30.glUseProgram(gShaderHandle);
+        GLES30.glUniform1i(gAttribLocationTex, 0);
+        GLES30.glUniformMatrix4fv(gAttribLocationProjMtx, false, orthoProjMatrix);
 
-        glBindVertexArray(gVertexArrayObjectHandle);
+        GLES30.glBindVertexArray(gVertexArrayObjectHandle);
 
         // Bind vertex/index buffers and setup attributes for ImDrawVert
-        glBindBuffer(GL_ARRAY_BUFFER, gVboHandle);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gElementsHandle);
-        glEnableVertexAttribArray(gAttribLocationVtxPos);
-        glEnableVertexAttribArray(gAttribLocationVtxUV);
-        glEnableVertexAttribArray(gAttribLocationVtxColor);
-        glVertexAttribPointer(gAttribLocationVtxPos, 2, GL_FLOAT, false, ImDrawData.SIZEOF_IM_DRAW_VERT, 0);
-        glVertexAttribPointer(gAttribLocationVtxUV, 2, GL_FLOAT, false, ImDrawData.SIZEOF_IM_DRAW_VERT, 8);
-        glVertexAttribPointer(gAttribLocationVtxColor, 4, GL_UNSIGNED_BYTE, true, ImDrawData.SIZEOF_IM_DRAW_VERT, 16);
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, gVboHandle);
+        GLES30.glBindBuffer(GLES30.GL_ELEMENT_ARRAY_BUFFER, gElementsHandle);
+        GLES30.glEnableVertexAttribArray(gAttribLocationVtxPos);
+        GLES30.glEnableVertexAttribArray(gAttribLocationVtxUV);
+        GLES30.glEnableVertexAttribArray(gAttribLocationVtxColor);
+        GLES30.glVertexAttribPointer(gAttribLocationVtxPos, 2, GLES30.GL_FLOAT, false, ImDrawData.SIZEOF_IM_DRAW_VERT, 0);
+        GLES30.glVertexAttribPointer(gAttribLocationVtxUV, 2, GLES30.GL_FLOAT, false, ImDrawData.SIZEOF_IM_DRAW_VERT, 8);
+        GLES30.glVertexAttribPointer(gAttribLocationVtxColor, 4, GLES30.GL_UNSIGNED_BYTE, true, ImDrawData.SIZEOF_IM_DRAW_VERT, 16);
     }
 
     private void unbind() {
         // Destroy the temporary VAO
-        glDeleteVertexArrays(gVertexArrayObjectHandle);
+        GLES30.glDeleteVertexArrays(gVertexArrayObjectHandle);
     }
 
     //--------------------------------------------------------------------------------------------------------
@@ -423,8 +421,8 @@ public final class ImGuiImplGl3 {
             @Override
             public void accept(final ImGuiViewport vp) {
                 if (!vp.hasFlags(ImGuiViewportFlags.NoRendererClear)) {
-                    glClearColor(0, 0, 0, 0);
-                    glClear(GL_COLOR_BUFFER_BIT);
+                    GLES30.glClearColor(0, 0, 0, 0);
+                    GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
                 }
                 renderDrawData(vp.getDrawData());
             }
@@ -436,58 +434,43 @@ public final class ImGuiImplGl3 {
     }
 
     private int createAndCompileShader(final int type, final CharSequence source) {
-        final int id = glCreateShader(type);
+        final int id = GLES30.glCreateShader(type);
 
-        glShaderSource(id, source);
-        glCompileShader(id);
+        GLES30.glShaderSource(id, source);
+        GLES30.glCompileShader(id);
 
-        if (glGetShaderi(id, GL_COMPILE_STATUS) == GL_FALSE) {
-            throw new IllegalStateException("Failed to compile shader:\n" + glGetShaderInfoLog(id));
+        if (GLES30.glGetShaderi(id, GLES30.GL_COMPILE_STATUS) == GLES30.GL_FALSE) {
+            throw new IllegalStateException("Failed to compile shader:\n" + GLES30.glGetShaderInfoLog(id));
         }
 
         return id;
     }
 
     private String getVertexShaderGlsl120() {
-        return glslVersion + "\n"
-            + "uniform mat4 ProjMtx;\n"
-            + "attribute vec2 Position;\n"
-            + "attribute vec2 UV;\n"
-            + "attribute vec4 Color;\n"
-            + "varying vec2 Frag_UV;\n"
-            + "varying vec4 Frag_Color;\n"
-            + "void main()\n"
-            + "{\n"
-            + "    Frag_UV = UV;\n"
-            + "    Frag_Color = Color;\n"
-            + "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-            + "}\n";
+        return "";
     }
 
     private String getVertexShaderGlsl130() {
-        return glslVersion + "\n"
-            + "uniform mat4 ProjMtx;\n"
-            + "in vec2 Position;\n"
-            + "in vec2 UV;\n"
-            + "in vec4 Color;\n"
-            + "out vec2 Frag_UV;\n"
-            + "out vec4 Frag_Color;\n"
-            + "void main()\n"
-            + "{\n"
-            + "    Frag_UV = UV;\n"
-            + "    Frag_Color = Color;\n"
-            + "    gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
-            + "}\n";
+        return "";
     }
 
     private String getVertexShaderGlsl410Core() {
-        return glslVersion + "\n"
+        return "#version 300 es\n"
+
+            + "precision highp float;\n"
+            + "precision highp int;\n"
+            + "precision lowp sampler2D;\n"
+            + "precision lowp samplerCube;\n"
+
             + "layout (location = 0) in vec2 Position;\n"
             + "layout (location = 1) in vec2 UV;\n"
             + "layout (location = 2) in vec4 Color;\n"
+
             + "uniform mat4 ProjMtx;\n"
+
             + "out vec2 Frag_UV;\n"
             + "out vec4 Frag_Color;\n"
+
             + "void main()\n"
             + "{\n"
             + "    Frag_UV = UV;\n"
@@ -497,37 +480,28 @@ public final class ImGuiImplGl3 {
     }
 
     private String getFragmentShaderGlsl120() {
-        return glslVersion + "\n"
-            + "#ifdef GL_ES\n"
-            + "    precision mediump float;\n"
-            + "#endif\n"
-            + "uniform sampler2D Texture;\n"
-            + "varying vec2 Frag_UV;\n"
-            + "varying vec4 Frag_Color;\n"
-            + "void main()\n"
-            + "{\n"
-            + "    gl_FragColor = Frag_Color * texture2D(Texture, Frag_UV.st);\n"
-            + "}\n";
+        return "";
     }
 
     private String getFragmentShaderGlsl130() {
-        return glslVersion + "\n"
-            + "uniform sampler2D Texture;\n"
-            + "in vec2 Frag_UV;\n"
-            + "in vec4 Frag_Color;\n"
-            + "out vec4 Out_Color;\n"
-            + "void main()\n"
-            + "{\n"
-            + "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
-            + "}\n";
+        return "";
     }
 
     private String getFragmentShaderGlsl410Core() {
-        return glslVersion + "\n"
+        return "#version 300 es\n"
+
+            + "precision highp float;\n"
+            + "precision mediump int;\n"
+            + "precision lowp sampler2D;\n"
+            + "precision lowp samplerCube;\n"
+
             + "in vec2 Frag_UV;\n"
             + "in vec4 Frag_Color;\n"
+
             + "uniform sampler2D Texture;\n"
+
             + "layout (location = 0) out vec4 Out_Color;\n"
+
             + "void main()\n"
             + "{\n"
             + "    Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"

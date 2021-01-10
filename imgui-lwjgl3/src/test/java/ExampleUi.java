@@ -11,14 +11,13 @@ import imgui.type.ImBoolean;
 import imgui.ImColor;
 import imgui.type.ImString;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengles.GLES30;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import static org.lwjgl.opengl.GL32.*;
 
 @SuppressWarnings({"MagicNumber", "VisibilityModifier"})
 final class ExampleUi {
@@ -206,16 +205,16 @@ final class ExampleUi {
         }
         buffer.flip();
 
-        final int textureID = glGenTextures();
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        final int textureID = GLES30.glGenTextures();
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureID);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_S, GLES30.GL_CLAMP_TO_EDGE);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR);
+        GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, image.getWidth(), image.getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA8, image.getWidth(), image.getHeight(), 0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, buffer);
 
         return textureID;
     }
