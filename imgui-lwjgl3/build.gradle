@@ -26,11 +26,15 @@ dependencies {
 
     implementation 'org.lwjgl:lwjgl'
     implementation 'org.lwjgl:lwjgl-glfw'
+
     implementation 'org.lwjgl:lwjgl-opengl'
+    implementation 'org.lwjgl:lwjgl-opengles'
 
     testRuntimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
     testRuntimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+
     testRuntimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    testRuntimeOnly "org.lwjgl:lwjgl-opengles::$lwjglNatives"
 
     implementation project(':imgui-binding')
 }

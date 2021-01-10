@@ -1,9 +1,3 @@
-import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL32.GL_COLOR_BUFFER_BIT;
-import static org.lwjgl.opengl.GL32.GL_TRUE;
-import static org.lwjgl.opengl.GL32.glClear;
-import static org.lwjgl.opengl.GL32.glClearColor;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
@@ -22,9 +16,14 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.IntBuffer;
 import java.util.Objects;
+
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.opengles.GLES;
+import org.lwjgl.opengles.GLES30;
+import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 
 @SuppressWarnings("MagicNumber")
@@ -36,7 +35,6 @@ public final class ImGuiGlfwExample {
 
     // LWJGL3 renderer (SHOULD be initialized)
     private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
-    private String glslVersion = null; // We can initialize our renderer with different versions of the GLSL
 
     // User UI to render
     private final ExampleUi exampleUi = new ExampleUi();
@@ -52,7 +50,7 @@ public final class ImGuiGlfwExample {
         // Method initializes LWJGL3 renderer.
         // This method SHOULD be called after you've initialized your ImGui configuration (fonts and so on).
         // ImGui context should be created as well.
-        imGuiGl3.init(glslVersion);
+        imGuiGl3.init();
 
         loop();
 
@@ -73,17 +71,17 @@ public final class ImGuiGlfwExample {
         GLFWErrorCallback.createPrint(System.err).set();
 
         // Initialize GLFW. Most GLFW functions will not work before doing this.
-        if (!glfwInit()) {
+        if (!GLFW.glfwInit()) {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
 
         // Configure GLFW
-        glfwDefaultWindowHints(); // optional, the current window hints are already the default
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
+        GLFW.glfwDefaultWindowHints(); // optional, the current window hints are already the default
+        GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE); // the window will stay hidden after creation
 
         decideGlGlslVersions();
 
-        windowPtr = glfwCreateWindow(1280, 768, "Dear ImGui+LWJGL Example", NULL, NULL);
+        windowPtr = GLFW.glfwCreateWindow(1280, 768, "Dear ImGui+LWJGL Example", NULL, NULL);
 
         if (windowPtr == NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
@@ -94,19 +92,19 @@ public final class ImGuiGlfwExample {
             final IntBuffer pWidth = stack.mallocInt(1); // int*
             final IntBuffer pHeight = stack.mallocInt(1); // int*
 
-            // Get the window size passed to glfwCreateWindow
-            glfwGetWindowSize(windowPtr, pWidth, pHeight);
+            // Get the window size passed to GLFW.glfwCreateWindow
+            GLFW.glfwGetWindowSize(windowPtr, pWidth, pHeight);
 
             // Get the resolution of the primary monitor
-            final GLFWVidMode vidmode = Objects.requireNonNull(glfwGetVideoMode(glfwGetPrimaryMonitor()));
+            final GLFWVidMode vidmode = Objects.requireNonNull(GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor()));
 
             // Center the window
-            glfwSetWindowPos(windowPtr, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
+            GLFW.glfwSetWindowPos(windowPtr, (vidmode.width() - pWidth.get(0)) / 2, (vidmode.height() - pHeight.get(0)) / 2);
         } // the stack frame is popped automatically
 
-        glfwMakeContextCurrent(windowPtr); // Make the OpenGL context current
-        glfwSwapInterval(GLFW_TRUE); // Enable v-sync
-        glfwShowWindow(windowPtr); // Make the window visible
+        GLFW.glfwMakeContextCurrent(windowPtr); // Make the OpenGL context current
+        GLFW.glfwSwapInterval(GLFW.GLFW_TRUE); // Enable v-sync
+        GLFW.glfwShowWindow(windowPtr); // Make the window visible
 
         // IMPORTANT!!
         // This line is critical for LWJGL's interoperation with GLFW's
@@ -114,22 +112,18 @@ public final class ImGuiGlfwExample {
         // LWJGL detects the context that is current in the current thread,
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
-        GL.createCapabilities();
+        Configuration.OPENGLES_EXPLICIT_INIT.set(true);
+        GLES.create(GL.getFunctionProvider());
+        GLES.createCapabilities();
     }
 
     private void decideGlGlslVersions() {
-        final boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
-        if (isMac) {
-            glslVersion = "#version 150";
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-            glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-            glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
-        } else {
-            glslVersion = "#version 130";
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-        }
+        GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_ES_API);
+
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1);
+
+        GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_ANY_PROFILE);
     }
 
     // Initialize Dear ImGui.
@@ -194,7 +188,7 @@ public final class ImGuiGlfwExample {
     // Main application loop
     private void loop() throws Exception {
         // Run the rendering loop until the user has attempted to close the window
-        while (!glfwWindowShouldClose(windowPtr)) {
+        while (!GLFW.glfwWindowShouldClose(windowPtr)) {
             startFrame();
 
             // Any Dear ImGui code SHOULD go between ImGui.newFrame()/ImGui.render() methods
@@ -210,8 +204,8 @@ public final class ImGuiGlfwExample {
 
     private void startFrame() {
         // Set the clear color and clear the window
-        glClearColor(exampleUi.backgroundColor[0], exampleUi.backgroundColor[1], exampleUi.backgroundColor[2], 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLES30.glClearColor(exampleUi.backgroundColor[0], exampleUi.backgroundColor[1], exampleUi.backgroundColor[2], 0.0f);
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
     }
 
     private void endFrame() {
@@ -220,21 +214,21 @@ public final class ImGuiGlfwExample {
         imGuiGl3.renderDrawData(ImGui.getDrawData());
 
         if (ImGui.getIO().hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
-            final long backupWindowPtr = glfwGetCurrentContext();
+            final long backupWindowPtr = GLFW.glfwGetCurrentContext();
             ImGui.updatePlatformWindows();
             ImGui.renderPlatformWindowsDefault();
-            glfwMakeContextCurrent(backupWindowPtr);
+            GLFW.glfwMakeContextCurrent(backupWindowPtr);
         }
 
-        glfwSwapBuffers(windowPtr);
-        glfwPollEvents();
+        GLFW.glfwSwapBuffers(windowPtr);
+        GLFW.glfwPollEvents();
     }
 
     private void disposeWindow() {
-        glfwFreeCallbacks(windowPtr);
-        glfwDestroyWindow(windowPtr);
-        glfwTerminate();
-        Objects.requireNonNull(glfwSetErrorCallback(null)).free();
+//        GLFW.glfwFreeCallbacks(windowPtr);
+        GLFW.glfwDestroyWindow(windowPtr);
+        GLFW.glfwTerminate();
+        Objects.requireNonNull(GLFW.glfwSetErrorCallback(null)).free();
     }
 
     private byte[] loadFromResources(final String fileName) {
