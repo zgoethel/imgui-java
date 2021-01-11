@@ -31,7 +31,8 @@ import org.lwjgl.opengles.GLES30;
  * Please read the documentation for the {@link #init(String)}.
  */
 @SuppressWarnings("MagicNumber")
-public final class ImGuiImplGl3 {
+public final class ImGuiGLES30
+{
     // OpenGL Data
     private String glslVersion = "";
     private int gFontTexture = 0;
@@ -74,8 +75,8 @@ public final class ImGuiImplGl3 {
     private boolean lastEnableScissorTest = false;
 
     /**
-     * Method to do an initialization of the {@link ImGuiImplGl3} state.
-     * It SHOULD be called before calling of the {@link ImGuiImplGl3#renderDrawData(ImDrawData)} method.
+     * Method to do an initialization of the {@link ImGuiGLES30} state.
+     * It SHOULD be called before calling of the {@link ImGuiGLES30#renderDrawData(ImDrawData)} method.
      * <p>
      * Unlike in the {@link #init(String)} method, here the glslVersion argument is omitted.
      * Thus a "#version 130" string will be used instead.
@@ -85,8 +86,8 @@ public final class ImGuiImplGl3 {
     }
 
     /**
-     * Method to do an initialization of the {@link ImGuiImplGl3} state.
-     * It SHOULD be called before calling of the {@link ImGuiImplGl3#renderDrawData(ImDrawData)} method.
+     * Method to do an initialization of the {@link ImGuiGLES30} state.
+     * It SHOULD be called before calling of the {@link ImGuiGLES30#renderDrawData(ImDrawData)} method.
      * <p>
      * Method takes an argument, which should be a valid GLSL string with the version to use.
      * <pre>
@@ -192,7 +193,7 @@ public final class ImGuiImplGl3 {
     }
 
     /**
-     * Call this method in the end of your application cycle to dispose resources used by {@link ImGuiImplGl3}.
+     * Call this method in the end of your application cycle to dispose resources used by {@link ImGuiGLES30}.
      */
     public void dispose() {
         GLES30.glDeleteBuffers(gVboHandle);

@@ -8,8 +8,9 @@ import imgui.ImGuiIO;
 import imgui.ImGuiStyle;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiConfigFlags;
-import imgui.gl3.ImGuiImplGl3;
-import imgui.glfw.ImGuiImplGlfw;
+import imgui.gl3.ImGuiGLES30;
+import imgui.glfw.ImGuiGLFW;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,10 +32,10 @@ public final class ImGuiGlfwExample {
     private long windowPtr; // pointer to the current GLFW window
 
     // LWJGJ3 window backend
-    private final ImGuiImplGlfw imGuiGlfw = new ImGuiImplGlfw();
+    private final ImGuiGLFW imGuiGlfw = new ImGuiGLFW();
 
     // LWJGL3 renderer (SHOULD be initialized)
-    private final ImGuiImplGl3 imGuiGl3 = new ImGuiImplGl3();
+    private final ImGuiGLES30 imGuiGl3 = new ImGuiGLES30();
 
     // User UI to render
     private final ExampleUi exampleUi = new ExampleUi();

@@ -21,14 +21,7 @@ import imgui.flag.ImGuiMouseCursor;
 import imgui.flag.ImGuiNavInput;
 import imgui.flag.ImGuiViewportFlags;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFWCharCallback;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
-import org.lwjgl.glfw.GLFWMonitorCallback;
-import org.lwjgl.glfw.GLFWMouseButtonCallback;
-import org.lwjgl.glfw.GLFWNativeWin32;
-import org.lwjgl.glfw.GLFWScrollCallback;
-import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.glfw.*;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -43,7 +36,8 @@ import static org.lwjgl.system.MemoryUtil.NULL;
  * It supports clipboard, gamepad, mouse and keyboard in the same way the original Dear ImGui code does. You can copy-paste this class in your codebase and
  * modify the rendering routine in the way you'd like.
  */
-public class ImGuiImplGlfw {
+public class ImGuiGLFW
+{
     protected static final boolean IS_WINDOWS = System.getProperty("os.name", "generic").toLowerCase().contains("win");
 
     // Pointer of the current GLFW window
@@ -159,8 +153,25 @@ public class ImGuiImplGlfw {
         wantUpdateMonitors = true;
     }
 
+    int xPos, yPos;
+
+    private void windowMainPosCallback(final long windowId, final int xPos, final int yPos)
+    {
+        this.xPos = xPos;
+        this.yPos = yPos;
+    }
+
+    private void cursorPosCallback(long window, double xPos, double yPos)
+    {
+        ImGuiIO io = ImGui.getIO();
+        io.setMousePos(
+            (float)xPos,// + this.xPos,
+            (float)yPos// + this.yPos
+        );
+    }
+
     /**
-     * Method to do an initialization of the {@link ImGuiImplGlfw} state. It SHOULD be called before calling the {@link ImGuiImplGlfw#newFrame()} method.
+     * Method to do an initialization of the {@link ImGuiGLFW} state. It SHOULD be called before calling the {@link ImGuiGLFW#newFrame()} method.
      * <p>
      * Method takes two arguments, which should be a valid GLFW window pointer and a boolean indicating whether or not to install callbacks.
      */
@@ -234,6 +245,11 @@ public class ImGuiImplGlfw {
             prevUserCallbackKey = glfwSetKeyCallback(windowId, this::keyCallback);
             prevUserCallbackChar = glfwSetCharCallback(windowId, this::charCallback);
             prevUserCallbackMonitor = glfwSetMonitorCallback(this::monitorCallback);
+
+            glfwSetCursorPosCallback(windowId, this::cursorPosCallback);
+            glfwSetWindowPosCallback(windowId, this::windowMainPosCallback);
+
+            glfwSetWindowPos(windowId, 50, 100);
         }
 
         // Update monitors the first time (note: monitor callback are broken in GLFW 3.2 and earlier, see github.com/glfw/glfw/issues/784)
@@ -289,7 +305,7 @@ public class ImGuiImplGlfw {
     }
 
     /**
-     * Method to restore {@link org.lwjgl.glfw.GLFW} to it's state prior to calling method {@link ImGuiImplGlfw#init(long, boolean)}.
+     * Method to restore {@link org.lwjgl.glfw.GLFW} to it's state prior to calling method {@link ImGuiGLFW#init(long, boolean)}.
      */
     public void dispose() {
         shutdownPlatformInterface();
@@ -316,39 +332,39 @@ public class ImGuiImplGlfw {
             mouseJustPressed[i] = false;
         }
 
-        io.getMousePos(mousePosBackup);
-        io.setMousePos(-Float.MAX_VALUE, -Float.MAX_VALUE);
-        io.setMouseHoveredViewport(0);
-
-        final ImGuiPlatformIO platformIO = ImGui.getPlatformIO();
-
-        for (int n = 0; n < platformIO.getViewportsSize(); n++) {
-            final ImGuiViewport viewport = platformIO.getViewports(n);
-            final long windowPtr = viewport.getPlatformHandle();
-
-            final boolean focused = glfwGetWindowAttrib(windowPtr, GLFW_FOCUSED) != 0;
-
-            if (focused) {
-                if (io.getWantSetMousePos()) {
-                    glfwSetCursorPos(windowPtr, mousePosBackup.x - viewport.getPosX(), mousePosBackup.y - viewport.getPosY());
-                } else {
-                    glfwGetCursorPos(windowPtr, mouseX, mouseY);
-
-                    if (io.hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
-                        // Multi-viewport mode: mouse position in OS absolute coordinates (io.MousePos is (0,0) when the mouse is on the upper-left of the primary monitor)
-                        glfwGetWindowPos(windowPtr, windowX, windowY);
-                        io.setMousePos((float) mouseX[0] + windowX[0], (float) mouseY[0] + windowY[0]);
-                    } else {
-                        // Single viewport mode: mouse position in client window coordinates (io.MousePos is (0,0) when the mouse is on the upper-left corner of the app window)
-                        io.setMousePos((float) mouseX[0], (float) mouseY[0]);
-                    }
-                }
-
-                for (int i = 0; i < ImGuiMouseButton.COUNT; i++) {
-                    io.setMouseDown(i, glfwGetMouseButton(windowPtr, i) != 0);
-                }
-            }
-        }
+//        io.getMousePos(mousePosBackup);
+//        io.setMousePos(-Float.MAX_VALUE, -Float.MAX_VALUE);
+//        io.setMouseHoveredViewport(0);
+//
+//        final ImGuiPlatformIO platformIO = ImGui.getPlatformIO();
+//
+//        for (int n = 0; n < platformIO.getViewportsSize(); n++) {
+//            final ImGuiViewport viewport = platformIO.getViewports(n);
+//            final long windowPtr = viewport.getPlatformHandle();
+//
+//            final boolean focused = glfwGetWindowAttrib(windowPtr, GLFW_FOCUSED) != 0;
+//
+//            if (focused) {
+//                if (io.getWantSetMousePos()) {
+//                    glfwSetCursorPos(windowPtr, mousePosBackup.x - viewport.getPosX(), mousePosBackup.y - viewport.getPosY());
+//                } else {
+//                    glfwGetCursorPos(windowPtr, mouseX, mouseY);
+//
+//                    if (io.hasConfigFlags(ImGuiConfigFlags.ViewportsEnable)) {
+//                        // Multi-viewport mode: mouse position in OS absolute coordinates (io.MousePos is (0,0) when the mouse is on the upper-left of the primary monitor)
+//                        glfwGetWindowPos(windowPtr, windowX, windowY);
+//                        io.setMousePos((float) mouseX[0] + windowX[0], (float) mouseY[0] + windowY[0]);
+//                    } else {
+//                        // Single viewport mode: mouse position in client window coordinates (io.MousePos is (0,0) when the mouse is on the upper-left corner of the app window)
+//                        io.setMousePos((float) mouseX[0], (float) mouseY[0]);
+//                    }
+//                }
+//
+//                for (int i = 0; i < ImGuiMouseButton.COUNT; i++) {
+//                    io.setMouseDown(i, glfwGetMouseButton(windowPtr, i) != 0);
+//                }
+//            }
+//        }
     }
 
     private void updateMouseCursor() {
@@ -553,13 +569,13 @@ public class ImGuiImplGlfw {
             glfwSetWindowPos(data.window, (int) vp.getPosX(), (int) vp.getPosY());
 
             // Install GLFW callbacks for secondary viewports
-            glfwSetMouseButtonCallback(data.window, ImGuiImplGlfw.this::mouseButtonCallback);
-            glfwSetScrollCallback(data.window, ImGuiImplGlfw.this::scrollCallback);
-            glfwSetKeyCallback(data.window, ImGuiImplGlfw.this::keyCallback);
-            glfwSetCharCallback(data.window, ImGuiImplGlfw.this::charCallback);
-            glfwSetWindowCloseCallback(data.window, ImGuiImplGlfw.this::windowCloseCallback);
-            glfwSetWindowPosCallback(data.window, ImGuiImplGlfw.this::windowPosCallback);
-            glfwSetWindowSizeCallback(data.window, ImGuiImplGlfw.this::windowSizeCallback);
+            glfwSetMouseButtonCallback(data.window, ImGuiGLFW.this::mouseButtonCallback);
+            glfwSetScrollCallback(data.window, ImGuiGLFW.this::scrollCallback);
+            glfwSetKeyCallback(data.window, ImGuiGLFW.this::keyCallback);
+            glfwSetCharCallback(data.window, ImGuiGLFW.this::charCallback);
+            glfwSetWindowCloseCallback(data.window, ImGuiGLFW.this::windowCloseCallback);
+            glfwSetWindowPosCallback(data.window, ImGuiGLFW.this::windowPosCallback);
+            glfwSetWindowSizeCallback(data.window, ImGuiGLFW.this::windowSizeCallback);
 
             glfwMakeContextCurrent(data.window);
             glfwSwapInterval(0);

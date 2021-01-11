@@ -237,7 +237,7 @@ That branch contains two important features: [multi-viewports](https://github.co
 See an official documentation about how to work with them.
 
 ##### Important!
-Take a note that multi-viewports api is **VERY** complex to implement. It's highly recommended to use `imgui.glfw.ImGuiImplGlfw` class as it's done in the example.
+Take a note that multi-viewports api is **VERY** complex to implement. It's highly recommended to use `imgui.glfw.ImGuiGLFW` class as it's done in the example.
 Otherwise, if you're using your own backed implementation, there are no guarantees it will work.
 
 ## Using FreeType
