@@ -11,14 +11,14 @@ class GenerateLibs extends DefaultTask {
     String description = 'Generates native libraries using classes under ":imgui-binding" and Dear ImGui itself from "imgui" submodule.'
 
     private final String[] buildEnvs = System.getProperty('envs')?.split(',')
-    private final boolean forWin32 = buildEnvs?.contains('win32')
-    private final boolean forWin64 = buildEnvs?.contains('win64')
-    private final boolean forLinux32 = buildEnvs?.contains('linux32')
-    private final boolean forLinux64 = buildEnvs?.contains('linux64')
-    private final boolean forMac64 = buildEnvs?.contains('mac64')
+    private final boolean forWin32 = false;//buildEnvs?.contains('win32')
+    private final boolean forWin64 = false;//buildEnvs?.contains('win64')
+    private final boolean forLinux32 = true;//buildEnvs?.contains('linux32')
+    private final boolean forLinux64 = false;//buildEnvs?.contains('linux64')
+    private final boolean forMac64 = false;//buildEnvs?.contains('mac64')
 
     private final boolean isLocal = System.properties.containsKey("local")
-    private final boolean withFreeType = System.properties.containsKey("withFreeType")
+    private final boolean withFreeType = false;//System.properties.containsKey("withFreeType")
 
     private final String sourceDir = project.file('src/main/java')
     private final String classpath = project.file('build/classes/java/main')
@@ -75,7 +75,7 @@ class GenerateLibs extends DefaultTask {
         }
 
         if (forLinux32) {
-            def linux32 = BuildTarget.newDefaultTarget(BuildTarget.TargetOs.Linux, false)
+            def linux32 = BuildTarget.newDefaultTarget(BuildTarget.TargetOs.Linux, false, true)
 
             if (withFreeType) {
                 linux32.cppFlags += ' -I/usr/include/freetype2 -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include'
@@ -85,7 +85,7 @@ class GenerateLibs extends DefaultTask {
             buildTargets += linux32
         }
         if (forLinux64) {
-            def linux64 = BuildTarget.newDefaultTarget(BuildTarget.TargetOs.Linux, true)
+            def linux64 = BuildTarget.newDefaultTarget(BuildTarget.TargetOs.Linux, true, true)
 
             if (withFreeType) {
                 linux64.cppFlags += ' -I/usr/include/freetype2 -I/usr/include/libpng16 -I/usr/include/harfbuzz -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include'
@@ -125,9 +125,9 @@ class GenerateLibs extends DefaultTask {
         if (forWin64)
             BuildExecutor.executeAnt(jniDir + '/build-windows64.xml', '-v', '-Dhas-compiler=true', '-Drelease=true', 'clean', 'postcompile')
         if (forLinux32)
-            BuildExecutor.executeAnt(jniDir + '/build-linux32.xml', '-v', '-Dhas-compiler=true', '-Drelease=true', 'clean', 'postcompile')
+            BuildExecutor.executeAnt(jniDir + '/build-linuxarm32.xml', '-v', '-Dhas-compiler=true', '-Drelease=true', 'clean', 'postcompile')
         if (forLinux64)
-            BuildExecutor.executeAnt(jniDir + '/build-linux64.xml', '-v', '-Dhas-compiler=true', '-Drelease=true', 'clean', 'postcompile')
+            BuildExecutor.executeAnt(jniDir + '/build-linuxarm64.xml', '-v', '-Dhas-compiler=true', '-Drelease=true', 'clean', 'postcompile')
         if (forMac64)
             BuildExecutor.executeAnt(jniDir + '/build-macosx64.xml', '-v', '-Dhas-compiler=true', '-Drelease=true', 'clean', 'postcompile')
 

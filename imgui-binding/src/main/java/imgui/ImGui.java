@@ -45,13 +45,13 @@ public class ImGui {
 
         final String extractedLibAbsPath = tryLoadFromClasspath(fullLibName);
 
-        if (extractedLibAbsPath != null) {
-            System.load(extractedLibAbsPath);
-        } else if (libPath != null) {
-            System.load(Paths.get(libPath).resolve(fullLibName).toFile().getAbsolutePath());
-        } else {
-            System.loadLibrary(libName);
-        }
+        // if (extractedLibAbsPath != null) {
+        //     System.load(extractedLibAbsPath);
+        // } else if (libPath != null) {
+        //     System.load(Paths.get(libPath).resolve(fullLibName).toFile().getAbsolutePath());
+        // } else {
+        //     System.loadLibrary(libName);
+        // }
 
         IMGUI_IO = new ImGuiIO();
         WINDOW_DRAW_LIST = new ImDrawList(0);
